@@ -3,29 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <!-- Запрет кэширования -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
-    
     <meta http-equiv="Expires" content="0">
-    <title>...</title>
-    <link rel="stylesheet" href="style.css?v=2.1">
+    <title>TGM Post</title>
+    <link rel="stylesheet" href="style.css?v=4.0">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
-
     <div id="app" style="display:none;">
+        <div class="section"><label id="wa_label_select_channel">...</label><select id="channel_select"></select></div>
         <div class="section">
-            <label id="wa_label_select_channel">...</label>
-            <select id="channel_select"></select>
-        </div>
-
-        <div class="section">
-            <label id="wa_label_text">...</label>
-            <textarea id="ad_text"></textarea>
+            <label id="wa_label_text">...</label><textarea id="ad_text"></textarea>
             <div class="row-tools">
                 <div class="hint" id="wa_hint_text">...</div>
-                <!-- Кнопка-скрепка -->
                 <button id="attach_btn" class="icon-btn">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
                 </button>
@@ -33,68 +24,56 @@
             </div>
             <div id="file_list" class="file-preview-list"></div>
         </div>
-
-        <div class="section">
-            <label id="wa_label_name">...</label>
-            <input type="text" id="contact_name">
-        </div>
-
+        <div class="section"><label id="wa_label_name">...</label><input type="text" id="contact_name"></div>
         <div class="row-fields">
-            <div class="section">
-                <label id="wa_label_phone">...</label>
-                <input type="text" id="contact_phone">
-            </div>
-            <div class="section">
-                <label id="wa_label_email">...</label>
-                <input type="email" id="contact_email">
-            </div>
+            <div class="section"><label id="wa_label_phone">...</label><input type="text" id="contact_phone"></div>
+            <div class="section"><label id="wa_label_email">...</label><input type="email" id="contact_email"></div>
         </div>
-
         <button id="submit_btn">...</button>
-
-        <!-- Блок помощи -->
         <div id="help-container">
-            <button class="help-icon-btn" onclick="toggleHelp()">
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
-                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
-                </svg>
-            </button>
+            <button class="help-icon-btn" onclick="toggleHelp()"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg></button>
             <div id="help-text" class="help-content"></div>
         </div>
     </div>
 
-    <div id="loader" class="loading">...</div>
+    <div id="loader" style="padding: 50px; text-align: center; font-family: sans-serif; color: #777;">
+        <div class="spinner" style="margin-bottom: 20px;"></div>
+        <div id="debug-log" style="font-size: 10px; color: #aaa; text-align: left; background: #eee; padding: 10px; border-radius: 5px;">
+            Initializing...
+        </div>
+    </div>
 
     <script>
         const tg = window.Telegram.WebApp;
+        const logEl = document.getElementById('debug-log');
+        function log(msg) { logEl.innerHTML += `<br>> ${msg}`; console.log(msg); }
+
         const API_BASE = "https://tgm-sync.sigmaboy.us/api"; 
         
-        // Безопасное получение данных пользователя
-        const initData = tg.initDataUnsafe || {};
-        const user = initData.user || { id: 12345, first_name: "Admin", language_code: "ru" };
-        const userLang = user.language_code || 'en';
-
-        // Функция для чистой склейки URL параметров
-        function getUrl(path, params = {}) {
-            const url = new URL(`${API_BASE}${path}`);
-            Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
-            url.searchParams.append('v', Date.now()); // Cache Busting
-            return url.toString();
-        }
-
         async function init() {
+            log("SDK Ready check...");
             tg.ready();
             tg.expand();
+            
+            const user = tg.initDataUnsafe?.user || { id: 12345, first_name: "Admin", language_code: "ru" };
+            log(`User: ${user.id}, Lang: ${user.language_code}`);
+
+            function getUrl(path, params = {}) {
+                const url = new URL(`${API_BASE}${path}`);
+                Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
+                url.searchParams.append('v', Date.now());
+                return url.toString();
+            }
 
             try {
-                // 1. Загружаем локализацию
-                const locRes = await fetch(getUrl('/loc', { lang: userLang }));
-                if (!locRes.ok) throw new Error(`Loc load failed: ${locRes.status}`);
+                log("Fetching Loc...");
+                const locRes = await fetch(getUrl('/loc', { lang: user.language_code || 'ru' }));
+                if (!locRes.ok) throw new Error(`Loc status: ${locRes.status}`);
                 const loc = await locRes.json();
                 window.LOC = loc;
+                log("Loc OK");
 
+                // Mapping
                 const mapping = {
                     'wa_label_select_channel': 'wa_label_select_channel',
                     'wa_label_text': 'wa_label_text',
@@ -103,32 +82,26 @@
                     'wa_label_phone': 'wa_label_phone',
                     'wa_label_email': 'wa_label_email',
                     'submit_btn': 'wa_btn_submit',
-                    'loader': 'wa_loading'
                 };
-                
                 Object.keys(mapping).forEach(id => {
                     const el = document.getElementById(id);
                     if (el && loc[mapping[id]]) el.textContent = loc[mapping[id]];
                 });
-                
                 document.getElementById('ad_text').placeholder = loc.wa_placeholder_text || "";
-                document.getElementById('contact_name').placeholder = loc.wa_placeholder_name || "";
-                document.getElementById('contact_phone').placeholder = loc.wa_placeholder_phone || "";
-                document.getElementById('contact_email').placeholder = loc.wa_placeholder_email || "";
                 document.getElementById('help-text').innerHTML = loc.wa_help_text || "";
 
-                // 2. Загружаем список каналов
+                log("Fetching Channels...");
                 const chRes = await fetch(getUrl('/channels'));
                 const chData = await chRes.json();
                 const select = document.getElementById('channel_select');
                 chData.channels.forEach(ch => {
                     const opt = document.createElement('option');
-                    opt.value = ch.id;
-                    opt.textContent = ch.name;
+                    opt.value = ch.id; opt.textContent = ch.name;
                     select.appendChild(opt);
                 });
+                log("Channels OK");
 
-                // 3. Загружаем профиль юзера
+                log("Fetching Profile...");
                 const prRes = await fetch(getUrl('/profile', { user_id: user.id }));
                 const prData = await prRes.json();
                 if (prData.data) {
@@ -136,23 +109,21 @@
                     document.getElementById('contact_phone').value = prData.data.phone || "";
                     document.getElementById('contact_email').value = prData.data.email || "";
                 }
+                log("Profile OK");
 
                 document.getElementById('loader').style.display = 'none';
                 document.getElementById('app').style.display = 'flex';
+                log("APP VISIBLE");
 
             } catch (e) {
-                // Выводим ошибку прямо на экран для диагностики на мобильном
-                document.getElementById('loader').innerHTML = `<div style="color:#ef5350;">Error: ${e.message}</div>`;
+                log(`<span style="color:red">ERROR: ${e.message}</span>`);
                 console.error(e);
             }
         }
 
-        function toggleHelp() {
-            document.getElementById('help-text').classList.toggle('open');
-        }
-
+        // Кнопки и прочее...
+        function toggleHelp() { document.getElementById('help-text').classList.toggle('open'); }
         document.getElementById('attach_btn').onclick = () => document.getElementById('file_input').click();
-
         document.getElementById('file_input').onchange = (e) => {
             const list = document.getElementById('file_list');
             list.innerHTML = "";
@@ -168,48 +139,28 @@
             const adText = document.getElementById('ad_text').value.trim();
             const phoneVal = document.getElementById('contact_phone').value.trim();
             const emailVal = document.getElementById('contact_email').value.trim();
-            
-            if (adText.length < 20) return tg.showAlert(window.LOC.wa_error_short || "Text too short");
-
-            if (phoneVal && window.LOC.wa_regex_phone) {
-                if (!(new RegExp(window.LOC.wa_regex_phone)).test(phoneVal)) 
-                    return tg.showAlert(window.LOC.wa_error_invalid_phone || "Invalid Phone");
-            }
-
-            if (emailVal && window.LOC.wa_regex_email) {
-                if (!(new RegExp(window.LOC.wa_regex_email)).test(emailVal)) 
-                    return tg.showAlert(window.LOC.wa_error_invalid_email || "Invalid Email");
-            }
+            if (adText.length < 20) return tg.showAlert(window.LOC.wa_error_short || "Short text");
 
             btn.disabled = true;
             const originalText = btn.textContent;
             btn.textContent = "...";
 
-            const data = {
-                user_id: user.id,
-                channel_id: document.getElementById('channel_select').value,
-                text: adText,
-                contact_info: { name: document.getElementById('contact_name').value, phone: phoneVal, email: emailVal }
-            };
-
             try {
-                const res = await fetch(getUrl('/submit'), {
+                const res = await fetch(`${API_BASE}/submit`, {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify(data)
+                    body: JSON.stringify({
+                        user_id: tg.initDataUnsafe?.user?.id || 12345,
+                        channel_id: document.getElementById('channel_select').value,
+                        text: adText,
+                        contact_info: { name: document.getElementById('contact_name').value, phone: phoneVal, email: emailVal }
+                    })
                 });
                 const result = await res.json();
-                if (res.ok && result.status === 'ok') {
-                    tg.close();
-                } else {
-                    tg.showAlert("Server Error: " + (result.message || res.statusText));
-                    btn.disabled = false;
-                    btn.textContent = originalText;
-                }
+                if (res.ok) tg.close();
+                else { tg.showAlert("Err: " + result.message); btn.disabled = false; btn.textContent = originalText; }
             } catch (e) {
-                tg.showAlert("Network Error: " + e.message);
-                btn.disabled = false;
-                btn.textContent = originalText;
+                tg.showAlert("Network Error"); btn.disabled = false; btn.textContent = originalText;
             }
         };
 
