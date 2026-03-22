@@ -12,48 +12,61 @@
 
     <div id="app" style="display:none;">
         <div class="section">
-            <label>Выберите канал</label>
+            <label id="wa_label_select_channel">...</label>
             <select id="channel_select"></select>
         </div>
 
         <div class="section">
-            <label>Текст объявления</label>
-            <textarea id="ad_text" placeholder="Опишите ваше предложение..."></textarea>
-            <div class="hint">Минимум 20 символов. ИИ проверит текст на соответствие правилам.</div>
+            <label id="wa_label_text">...</label>
+            <textarea id="ad_text"></textarea>
+            <div class="hint" id="wa_hint_text">...</div>
         </div>
 
         <div class="section">
-            <label>Контактное лицо</label>
-            <input type="text" id="contact_name" placeholder="Ваше имя">
+            <label id="wa_label_name">...</label>
+            <input type="text" id="contact_name">
         </div>
 
         <div class="section">
-            <label>Телефон / WhatsApp</label>
-            <input type="text" id="contact_phone" placeholder="+34 ...">
+            <label id="wa_label_phone">...</label>
+            <input type="text" id="contact_phone">
         </div>
 
-        <button id="submit_btn">Опубликовать объявление</button>
+        <button id="submit_btn">...</button>
     </div>
 
-    <div id="loader" class="loading">Загрузка приложения...</div>
+    <div id="loader" class="loading">...</div>
 
     <script>
         const tg = window.Telegram.WebApp;
         // Твой адрес туннеля
         const API_BASE = "https://tgm-sync.sigmaboy.us/api"; 
         
-        const user = tg.initDataUnsafe.user || { id: 12345, first_name: "Тест" };
+        const user = tg.initDataUnsafe.user || { id: 12345, first_name: "Тест", language_code: "ru" };
+        const userLang = user.language_code || 'en';
 
         async function init() {
             tg.ready();
             tg.expand();
 
             try {
-                // 1. Загружаем список каналов
+                // 1. Загружаем локализацию
+                const locRes = await fetch(`${API_BASE}/loc?lang=${userLang}`);
+                const loc = await locRes.json();
+                window.LOC = loc;
+
+                // Расстановка текстов
+                const textIds = ['wa_label_select_channel', 'wa_label_text', 'wa_hint_text', 'wa_label_name', 'wa_label_phone', 'submit_btn', 'loader'];
+                textIds.forEach(id => { if(document.getElementById(id)) document.getElementById(id).textContent = loc[id]; });
+                
+                document.getElementById('ad_text').placeholder = loc.wa_placeholder_text || "";
+                document.getElementById('contact_name').placeholder = loc.wa_placeholder_name || "";
+                document.getElementById('contact_phone').placeholder = loc.wa_placeholder_phone || "";
+
+                // 2. Загружаем список каналов
                 const chRes = await fetch(`${API_BASE}/channels`);
                 const chData = await chRes.json();
                 const select = document.getElementById('channel_select');
-                
                 chData.channels.forEach(ch => {
                     const opt = document.createElement('option');
                     opt.value = ch.id;
@@ -61,7 +74,7 @@
                     select.appendChild(opt);
                 });
 
-                // 2. Загружаем профиль юзера
+                // 3. Загружаем профиль юзера
                 const prRes = await fetch(`${API_BASE}/profile?user_id=${user.id}`);
                 const prData = await prRes.json();
                 
@@ -74,11 +87,11 @@
                 document.getElementById('app').style.display = 'flex';
 
             } catch (e) {
-                document.getElementById('loader').textContent = "Ошибка связи с сервером.";
+                document.getElementById('loader').textContent = "API Connection Error";
                 console.error(e);
             }
         }
-
+        
         document.getElementById('submit_btn').onclick = async () => {
             const btn = document.getElementById('submit_btn');
             const data = {
