@@ -71,23 +71,30 @@
         const tg = window.Telegram.WebApp;
         const API_BASE = "https://tgm-sync.sigmaboy.us/api"; 
         
-        const user = tg.initDataUnsafe.user || { id: 12345, first_name: "Admin", language_code: "ru" };
+        // Безопасное получение данных пользователя
+        const initData = tg.initDataUnsafe || {};
+        const user = initData.user || { id: 12345, first_name: "Admin", language_code: "ru" };
         const userLang = user.language_code || 'en';
+
+        // Функция для чистой склейки URL параметров
+        function getUrl(path, params = {}) {
+            const url = new URL(`${API_BASE}${path}`);
+            Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
+            url.searchParams.append('v', Date.now()); // Cache Busting
+            return url.toString();
+        }
 
         async function init() {
             tg.ready();
             tg.expand();
 
             try {
-                // Добавляем метку времени к каждому запросу, чтобы обмануть кэш
-                const cacheBust = `&v=${Date.now()}`;
-
                 // 1. Загружаем локализацию
-                const locRes = await fetch(`${API_BASE}/loc?lang=${userLang}${cacheBust}`);
+                const locRes = await fetch(getUrl('/loc', { lang: userLang }));
+                if (!locRes.ok) throw new Error(`Loc load failed: ${locRes.status}`);
                 const loc = await locRes.json();
                 window.LOC = loc;
 
-                // Маппинг ID элементов на ключи в таблице
                 const mapping = {
                     'wa_label_select_channel': 'wa_label_select_channel',
                     'wa_label_text': 'wa_label_text',
@@ -111,7 +118,7 @@
                 document.getElementById('help-text').innerHTML = loc.wa_help_text || "";
 
                 // 2. Загружаем список каналов
-                const chRes = await fetch(`${API_BASE}/channels?${cacheBust}`);
+                const chRes = await fetch(getUrl('/channels'));
                 const chData = await chRes.json();
                 const select = document.getElementById('channel_select');
                 chData.channels.forEach(ch => {
@@ -122,8 +129,7 @@
                 });
 
                 // 3. Загружаем профиль юзера
-                const prRes = await fetch(`${API_BASE}/profile?user_id=${user.id}${cacheBust}`);
-
+                const prRes = await fetch(getUrl('/profile', { user_id: user.id }));
                 const prData = await prRes.json();
                 if (prData.data) {
                     document.getElementById('contact_name').value = prData.data.name || user.first_name || "";
@@ -135,7 +141,8 @@
                 document.getElementById('app').style.display = 'flex';
 
             } catch (e) {
-                document.getElementById('loader').textContent = "Connection Error";
+                // Выводим ошибку прямо на экран для диагностики на мобильном
+                document.getElementById('loader').innerHTML = `<div style="color:#ef5350;">Error: ${e.message}</div>`;
                 console.error(e);
             }
         }
@@ -156,35 +163,24 @@
             });
         };
 
-        // ЛОГИКА ОТПРАВКИ
         document.getElementById('submit_btn').onclick = async () => {
             const btn = document.getElementById('submit_btn');
             const adText = document.getElementById('ad_text').value.trim();
             const phoneVal = document.getElementById('contact_phone').value.trim();
             const emailVal = document.getElementById('contact_email').value.trim();
             
-            // 1. Проверка длины текста
-            if (adText.length < 20) {
-                return tg.showAlert(window.LOC.wa_error_short || "Text too short");
-            }
+            if (adText.length < 20) return tg.showAlert(window.LOC.wa_error_short || "Text too short");
 
-            // 2. Валидация телефона (Regex)
             if (phoneVal && window.LOC.wa_regex_phone) {
-                const re = new RegExp(window.LOC.wa_regex_phone);
-                if (!re.test(phoneVal)) {
+                if (!(new RegExp(window.LOC.wa_regex_phone)).test(phoneVal)) 
                     return tg.showAlert(window.LOC.wa_error_invalid_phone || "Invalid Phone");
-                }
             }
 
-            // 3. Валидация Email (Regex)
             if (emailVal && window.LOC.wa_regex_email) {
-                const re = new RegExp(window.LOC.wa_regex_email);
-                if (!re.test(emailVal)) {
+                if (!(new RegExp(window.LOC.wa_regex_email)).test(emailVal)) 
                     return tg.showAlert(window.LOC.wa_error_invalid_email || "Invalid Email");
-                }
             }
 
-            // Если все проверки прошли, блокируем кнопку и шлем запрос
             btn.disabled = true;
             const originalText = btn.textContent;
             btn.textContent = "...";
@@ -193,23 +189,17 @@
                 user_id: user.id,
                 channel_id: document.getElementById('channel_select').value,
                 text: adText,
-                contact_info: {
-                    name: document.getElementById('contact_name').value,
-                    phone: phoneVal,
-                    email: emailVal
-                }
+                contact_info: { name: document.getElementById('contact_name').value, phone: phoneVal, email: emailVal }
             };
 
             try {
-                const res = await fetch(`${API_BASE}/submit`, {
+                const res = await fetch(getUrl('/submit'), {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify(data)
                 });
-                
                 const result = await res.json();
                 if (res.ok && result.status === 'ok') {
-                    // Успех: мгновенно закрываем приложение без лишних окон
                     tg.close();
                 } else {
                     tg.showAlert("Server Error: " + (result.message || res.statusText));
@@ -217,7 +207,7 @@
                     btn.textContent = originalText;
                 }
             } catch (e) {
-                tg.showAlert(window.LOC.wa_error_net || "Network error");
+                tg.showAlert("Network Error: " + e.message);
                 btn.disabled = false;
                 btn.textContent = originalText;
             }
