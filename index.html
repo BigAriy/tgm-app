@@ -209,11 +209,8 @@
                 
                 const result = await res.json();
                 if (res.ok && result.status === 'ok') {
-                    tg.showPopup({
-                        title: window.LOC.wa_success_title || "Success", 
-                        message: window.LOC.wa_success_msg || "Sent!", 
-                        buttons: [{type: "ok"}]
-                    }, () => tg.close());
+                    // Успех: мгновенно закрываем приложение без лишних окон
+                    tg.close();
                 } else {
                     tg.showAlert("Server Error: " + (result.message || res.statusText));
                     btn.disabled = false;
