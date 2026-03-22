@@ -1,0 +1,92 @@
+:root {
+    /* Переменные Telegram подхватываются автоматически */
+    --tg-bg: var(--tg-theme-bg-color, #ffffff);
+    --tg-text: var(--tg-theme-text-color, #000000);
+    --tg-button: var(--tg-theme-button-color, #3390ec);
+    --tg-button-text: var(--tg-theme-button-text-color, #ffffff);
+    --tg-hint: var(--tg-theme-hint-color, #707579);
+    --tg-secondary-bg: var(--tg-theme-secondary-bg-color, #f4f4f5);
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: var(--tg-bg);
+    color: var(--tg-text);
+    margin: 0;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+#app {
+    flex-direction: column;
+    gap: 20px;
+}
+
+.section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+label {
+    font-weight: bold;
+    font-size: 14px;
+    color: var(--tg-button);
+}
+
+select, textarea, input {
+    width: 100%;
+    padding: 12px;
+    border-radius: 10px;
+    border: 1px solid rgba(0,0,0,0.1);
+    background-color: var(--tg-secondary-bg);
+    color: var(--tg-text);
+    box-sizing: border-box;
+    font-size: 16px;
+    outline: none;
+    transition: border 0.2s;
+}
+
+select:focus, textarea:focus, input:focus {
+    border: 1px solid var(--tg-button);
+}
+
+textarea {
+    height: 140px;
+    resize: none;
+}
+
+.hint {
+    font-size: 12px;
+    color: var(--tg-hint);
+    padding-left: 4px;
+}
+
+#submit_btn {
+    background-color: var(--tg-button);
+    color: var(--tg-button-text);
+    border: none;
+    padding: 16px;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 16px;
+    cursor: pointer;
+    margin-top: 10px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+}
+
+#submit_btn:active {
+    transform: scale(0.98);
+}
+
+#submit_btn:disabled {
+    opacity: 0.6;
+}
+
+.loading {
+    text-align: center;
+    padding: 40px;
+    color: var(--tg-hint);
+}
