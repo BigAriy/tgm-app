@@ -1,11 +1,10 @@
-<!DOCTYPE html> 
+<!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Подать объявление</title>
-    <!-- Ссылка на стили -->
-    <link rel="stylesheet" href="style.css">
+    <title>...</title>
+    <link rel="stylesheet" href="style.css?v=2.1">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
@@ -19,7 +18,15 @@
         <div class="section">
             <label id="wa_label_text">...</label>
             <textarea id="ad_text"></textarea>
-            <div class="hint" id="wa_hint_text">...</div>
+            <div class="row-tools">
+                <div class="hint" id="wa_hint_text">...</div>
+                <!-- Кнопка-скрепка -->
+                <button id="attach_btn" class="icon-btn">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
+                </button>
+                <input type="file" id="file_input" style="display:none" multiple>
+            </div>
+            <div id="file_list" class="file-preview-list"></div>
         </div>
 
         <div class="section">
@@ -27,22 +34,38 @@
             <input type="text" id="contact_name">
         </div>
 
-        <div class="section">
-            <label id="wa_label_phone">...</label>
-            <input type="text" id="contact_phone">
+        <div class="row-fields">
+            <div class="section">
+                <label id="wa_label_phone">...</label>
+                <input type="text" id="contact_phone">
+            </div>
+            <div class="section">
+                <label id="wa_label_email">...</label>
+                <input type="email" id="contact_email">
+            </div>
         </div>
 
         <button id="submit_btn">...</button>
+
+        <!-- Блок помощи -->
+        <div id="help-container">
+            <button class="help-icon-btn" onclick="toggleHelp()">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                </svg>
+            </button>
+            <div id="help-text" class="help-content"></div>
+        </div>
     </div>
 
     <div id="loader" class="loading">...</div>
 
     <script>
         const tg = window.Telegram.WebApp;
-        // Твой адрес туннеля
         const API_BASE = "https://tgm-sync.sigmaboy.us/api"; 
-        
-        const user = tg.initDataUnsafe.user || { id: 12345, first_name: "Тест", language_code: "ru" };
+        const user = tg.initDataUnsafe.user || { id: 12345, first_name: "Admin", language_code: "ru" };
         const userLang = user.language_code || 'en';
 
         async function init() {
@@ -50,20 +73,17 @@
             tg.expand();
 
             try {
-                // 1. Загружаем локализацию
                 const locRes = await fetch(`${API_BASE}/loc?lang=${userLang}`);
                 const loc = await locRes.json();
                 window.LOC = loc;
 
-                // Расстановка текстов
-                const textIds = ['wa_label_select_channel', 'wa_label_text', 'wa_hint_text', 'wa_label_name', 'wa_label_phone', 'submit_btn', 'loader'];
+                const textIds = ['wa_label_select_channel', 'wa_label_text', 'wa_hint_text', 'wa_label_name', 'wa_label_phone', 'wa_label_email', 'submit_btn', 'loader'];
                 textIds.forEach(id => { if(document.getElementById(id)) document.getElementById(id).textContent = loc[id]; });
                 
                 document.getElementById('ad_text').placeholder = loc.wa_placeholder_text || "";
-                document.getElementById('contact_name').placeholder = loc.wa_placeholder_name || "";
-                document.getElementById('contact_phone').placeholder = loc.wa_placeholder_phone || "";
+                document.getElementById('contact_email').placeholder = loc.wa_placeholder_email || "";
+                document.getElementById('help-text').innerHTML = loc.wa_help_text || "";
 
-                // 2. Загружаем список каналов
                 const chRes = await fetch(`${API_BASE}/channels`);
                 const chData = await chRes.json();
                 const select = document.getElementById('channel_select');
@@ -74,24 +94,38 @@
                     select.appendChild(opt);
                 });
 
-                // 3. Загружаем профиль юзера
                 const prRes = await fetch(`${API_BASE}/profile?user_id=${user.id}`);
                 const prData = await prRes.json();
-                
                 if (prData.data) {
                     document.getElementById('contact_name').value = prData.data.name || user.first_name || "";
                     document.getElementById('contact_phone').value = prData.data.phone || "";
+                    document.getElementById('contact_email').value = prData.data.email || "";
                 }
 
                 document.getElementById('loader').style.display = 'none';
                 document.getElementById('app').style.display = 'flex';
 
             } catch (e) {
-                document.getElementById('loader').textContent = "API Connection Error";
-                console.error(e);
+                document.getElementById('loader').textContent = "Connection Error";
             }
         }
-        
+
+        function toggleHelp() {
+            document.getElementById('help-text').classList.toggle('open');
+        }
+
+        document.getElementById('attach_btn').onclick = () => document.getElementById('file_input').click();
+
+        document.getElementById('file_input').onchange = (e) => {
+            const list = document.getElementById('file_list');
+            list.innerHTML = "";
+            Array.from(e.target.files).forEach(f => {
+                const item = document.createElement('div');
+                item.textContent = "📎 " + f.name;
+                list.appendChild(item);
+            });
+        };
+
         document.getElementById('submit_btn').onclick = async () => {
             const btn = document.getElementById('submit_btn');
             const data = {
@@ -100,16 +134,15 @@
                 text: document.getElementById('ad_text').value,
                 contact_info: {
                     name: document.getElementById('contact_name').value,
-                    phone: document.getElementById('contact_phone').value
+                    phone: document.getElementById('contact_phone').value,
+                    email: document.getElementById('contact_email').value
                 }
             };
 
-            if (data.text.length < 20) {
-                return alert("Текст слишком короткий!");
-            }
+            if (data.text.length < 20) return alert(window.LOC.wa_error_short);
 
             btn.disabled = true;
-            btn.textContent = "Отправка...";
+            btn.textContent = "...";
 
             try {
                 const res = await fetch(`${API_BASE}/submit`, {
@@ -118,22 +151,15 @@
                     body: JSON.stringify(data)
                 });
                 
-                const result = await res.json();
-                if (result.status === 'ok') {
-                    tg.showPopup({
-                        title: "Успех",
-                        message: "Объявление отправлено на модерацию ИИ!",
-                        buttons: [{type: "ok"}]
-                    }, () => tg.close());
+                if ((await res.json()).status === 'ok') {
+                    tg.showPopup({title: window.LOC.wa_success_title, message: window.LOC.wa_success_msg, buttons: [{type: "ok"}]}, () => tg.close());
                 } else {
-                    alert("Ошибка: " + result.message);
                     btn.disabled = false;
-                    btn.textContent = "Опубликовать объявление";
+                    btn.textContent = window.LOC.submit_btn;
                 }
             } catch (e) {
-                alert("Ошибка сети");
+                alert(window.LOC.wa_error_net);
                 btn.disabled = false;
-                btn.textContent = "Опубликовать объявление";
             }
         };
 
