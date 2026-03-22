@@ -47,7 +47,6 @@ label {
     font-weight: 600;
     font-size: 13px;
     color: var(--tg-button);
-    text-transform: uppercase;
 }
 
 select, textarea, input {
