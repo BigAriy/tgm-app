@@ -208,14 +208,14 @@
                 });
                 
                 const result = await res.json();
-                if (result.status === 'ok') {
+                if (res.ok && result.status === 'ok') {
                     tg.showPopup({
                         title: window.LOC.wa_success_title || "Success", 
                         message: window.LOC.wa_success_msg || "Sent!", 
                         buttons: [{type: "ok"}]
                     }, () => tg.close());
                 } else {
-                    tg.showAlert("Error: " + result.message);
+                    tg.showAlert("Server Error: " + (result.message || res.statusText));
                     btn.disabled = false;
                     btn.textContent = originalText;
                 }
