@@ -77,8 +77,22 @@
                 const loc = await locRes.json();
                 window.LOC = loc;
 
-                const textIds = ['wa_label_select_channel', 'wa_label_text', 'wa_hint_text', 'wa_label_name', 'wa_label_phone', 'wa_label_email', 'submit_btn', 'loader'];
-                textIds.forEach(id => { if(document.getElementById(id)) document.getElementById(id).textContent = loc[id]; });
+                // Исправленный маппинг (ID в HTML -> Ключ в таблице)
+                const mapping = {
+                    'wa_label_select_channel': 'wa_label_select_channel',
+                    'wa_label_text': 'wa_label_text',
+                    'wa_hint_text': 'wa_hint_text',
+                    'wa_label_name': 'wa_label_name',
+                    'wa_label_phone': 'wa_label_phone',
+                    'wa_label_email': 'wa_label_email',
+                    'submit_btn': 'wa_btn_submit', // Вот здесь была ошибка
+                    'loader': 'wa_loading'
+                };
+                
+                Object.keys(mapping).forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el && loc[mapping[id]]) el.textContent = loc[mapping[id]];
+                });
                 
                 document.getElementById('ad_text').placeholder = loc.wa_placeholder_text || "";
                 document.getElementById('contact_email').placeholder = loc.wa_placeholder_email || "";
@@ -126,20 +140,41 @@
             });
         };
 
-        document.getElementById('submit_btn').onclick = async () => {
+        dot_btn').onclick = async () => {
+            document.getElementById('submit_btn').onclick = async () => {
             const btn = document.getElementById('submit_btn');
+            const phoneVal = document.getElementById('contact_phone').value.trim();
+            const emailVal = document.getElementById('contact_email').value.trim();
+            
             const data = {
                 user_id: user.id,
                 channel_id: document.getElementById('channel_select').value,
                 text: document.getElementById('ad_text').value,
                 contact_info: {
                     name: document.getElementById('contact_name').value,
-                    phone: document.getElementById('contact_phone').value,
-                    email: document.getElementById('contact_email').value
+                    phone: phoneVal,
+                    email: emailVal
                 }
+            } catch (e) {
+                alert(window.LOC.wa_error_net);
+                btn.disabled = false;
+                btn.textContent = window.LOC.wa_btn_submit; // Возвращаем текст из таблицы
             };
 
+            // 1. Проверка длины текста
             if (data.text.length < 20) return alert(window.LOC.wa_error_short);
+
+            // 2. Валидация телефона (Regex из таблицы)
+            if (phoneVal && window.LOC.wa_regex_phone) {
+                const re = new RegExp(window.LOC.wa_regex_phone);
+                if (!re.test(phoneVal)) return alert(window.LOC.wa_error_invalid_phone || "Invalid Phone");
+            }
+
+            // 3. Валидация Email (Regex из таблицы)
+            if (emailVal && window.LOC.wa_regex_email) {
+                const re = new RegExp(window.LOC.wa_regex_email);
+                if (!re.test(emailVal)) return alert(window.LOC.wa_error_invalid_email || "Invalid Email");
+            }
 
             btn.disabled = true;
             btn.textContent = "...";
