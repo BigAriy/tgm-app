@@ -3,6 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- Запрет кэширования -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    
+    <meta http-equiv="Expires" content="0">
     <title>...</title>
     <link rel="stylesheet" href="style.css?v=2.1">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -74,8 +79,11 @@
             tg.expand();
 
             try {
+                // Добавляем метку времени к каждому запросу, чтобы обмануть кэш
+                const cacheBust = `&v=${Date.now()}`;
+
                 // 1. Загружаем локализацию
-                const locRes = await fetch(`${API_BASE}/loc?lang=${userLang}`);
+                const locRes = await fetch(`${API_BASE}/loc?lang=${userLang}${cacheBust}`);
                 const loc = await locRes.json();
                 window.LOC = loc;
 
@@ -103,7 +111,7 @@
                 document.getElementById('help-text').innerHTML = loc.wa_help_text || "";
 
                 // 2. Загружаем список каналов
-                const chRes = await fetch(`${API_BASE}/channels`);
+                const chRes = await fetch(`${API_BASE}/channels?${cacheBust}`);
                 const chData = await chRes.json();
                 const select = document.getElementById('channel_select');
                 chData.channels.forEach(ch => {
@@ -114,7 +122,8 @@
                 });
 
                 // 3. Загружаем профиль юзера
-                const prRes = await fetch(`${API_BASE}/profile?user_id=${user.id}`);
+                const prRes = await fetch(`${API_BASE}/profile?user_id=${user.id}${cacheBust}`);
+
                 const prData = await prRes.json();
                 if (prData.data) {
                     document.getElementById('contact_name').value = prData.data.name || user.first_name || "";
