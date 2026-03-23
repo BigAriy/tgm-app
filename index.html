@@ -140,7 +140,11 @@
 
         // Кнопки и прочее...
         function toggleHelp() { document.getElementById('help-text').classList.toggle('open'); }
-        document.getElementById('attach_btn').onclick = () => document.getElementById('file_input').click();
+        document.getElementById('attach_btn').onclick = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            document.getElementById('file_input').click();
+        };
         document.getElementById('file_input').onchange = (e) => {
             const list = document.getElementById('file_list');
             list.innerHTML = "";
