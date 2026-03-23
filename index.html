@@ -185,9 +185,10 @@
                     body: formData
                 });
                 const result = await res.json();
-                if (res.ok) tg.close();
-                else { 
-                    tg.showAlert("Err: " + result.message); 
+                if (res.ok && result.status === 'ok') {
+                    tg.close();
+                } else { 
+                    tg.showAlert(result.message || "Error"); 
                     btn.disabled = false; 
                     btn.classList.remove('is-loading');
                     btnText.textContent = originalText; 
