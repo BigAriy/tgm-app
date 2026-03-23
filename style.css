@@ -129,11 +129,9 @@ textarea { height: 120px; resize: none; }
 .clear-btn {
     background: none;
     border: none;
-    color: #ef5350;
     font-size: 12px;
     font-weight: 600;
     cursor: pointer;
-    text-transform: uppercase;
     padding: 4px;
 }
 
