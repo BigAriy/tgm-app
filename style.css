@@ -66,12 +66,17 @@ textarea { height: 120px; resize: none; }
     background: none;
     border: none;
     color: var(--tg-button);
-    cursor: pointer;
+    cursor: default;
     padding: 5px;
     opacity: 0.8;
     display: flex;
     align-items: center;
     justify-content: center;
+    pointer-events: none;
+}
+
+.icon-btn svg {
+    pointer-events: auto;
 }
 
 
