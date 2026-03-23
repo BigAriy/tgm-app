@@ -184,3 +184,8 @@ textarea { height: 120px; resize: none; }
 .clear-btn:active {
     opacity: 0.5;
 }
+
+.icon-btn.disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
