@@ -14,7 +14,11 @@
     <div id="app" style="display:none;">
         <div class="section"><label id="wa_label_select_channel">...</label><select id="channel_select"></select></div>
         <div class="section">
-            <label id="wa_label_text">...</label><textarea id="ad_text"></textarea>
+            <div class="row-header">
+                <label id="wa_label_text">...</label>
+                <button id="wa_btn_clear" class="clear-btn">...</button>
+            </div>
+            <textarea id="ad_text"></textarea>
             <div class="row-tools">
                 <div class="hint" id="wa_hint_text">...</div>
                 <button id="attach_btn" class="icon-btn">
@@ -108,7 +112,15 @@
                     document.getElementById('contact_name').value = prData.data.name || user.first_name || "";
                     document.getElementById('contact_phone').value = prData.data.phone || "";
                     document.getElementById('contact_email').value = prData.data.email || "";
+                    // Восстанавливаем текст объявления
+                    document.getElementById('ad_text').value = prData.data.last_text || "";
                 }
+
+                // Логика кнопки очистки
+                document.getElementById('wa_btn_clear').onclick = () => {
+                    document.getElementById('ad_text').value = "";
+                };
+                
                 log("Profile OK");
 
                 document.getElementById('loader').style.display = 'none';
