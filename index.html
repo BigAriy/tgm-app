@@ -163,7 +163,6 @@
             const btnText = document.getElementById('btn_text');
             const originalText = btnText.textContent;
             btnText.textContent = window.LOC.wa_loading || "...";
-            btn.textContent = "...";
 
             const formData = new FormData();
             formData.append('user_id', tg.initDataUnsafe?.user?.id || 12345);
@@ -198,8 +197,6 @@
                 btn.disabled = false; 
                 btn.classList.remove('is-loading');
                 btnText.textContent = originalText;
-            }
-                tg.showAlert("Network Error"); btn.disabled = false; btn.textContent = originalText;
             }
         };
 
