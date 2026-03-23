@@ -177,13 +177,7 @@
             try {
                 const res = await fetch(`${API_BASE}/submit`, {
                     method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({
-                        user_id: tg.initDataUnsafe?.user?.id || 12345,
-                        channel_id: document.getElementById('channel_select').value,
-                        text: adText,
-                        contact_info: { name: document.getElementById('contact_name').value, phone: phoneVal, email: emailVal }
-                    })
+                    body: formData
                 });
                 const result = await res.json();
                 if (res.ok) tg.close();
