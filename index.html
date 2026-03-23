@@ -159,6 +159,21 @@
             const originalText = btn.textContent;
             btn.textContent = "...";
 
+            const formData = new FormData();
+            formData.append('user_id', tg.initDataUnsafe?.user?.id || 12345);
+            formData.append('channel_id', document.getElementById('channel_select').value);
+            formData.append('text', adText);
+            formData.append('contact_info', JSON.stringify({ 
+                name: document.getElementById('contact_name').value, 
+                phone: phoneVal, 
+                email: emailVal 
+            }));
+
+            const fileInput = document.getElementById('file_input');
+            for (let i = 0; i < fileInput.files.length; i++) {
+                formData.append('files', fileInput.files[i]);
+            }
+
             try {
                 const res = await fetch(`${API_BASE}/submit`, {
                     method: 'POST',
