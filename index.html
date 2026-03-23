@@ -194,13 +194,24 @@
                 item.appendChild(name);
                 item.appendChild(removeBtn);
                 list.appendChild(item);
+
+            // Визуально отключаем кнопку при лимите
+            if (selectedFiles.length >= maxFiles) {
+                attachBtn?.classList.add('disabled');
+            } else {
+                attachBtn?.classList.remove('disabled');
+            }
+                
             });
         }
 
 
-        const attachBtn = document.getElementById('attach_btn');
+                const attachBtn = document.getElementById('attach_btn');
         if (attachBtn) {
             attachBtn.onclick = () => {
+                if (selectedFiles.length >= maxFiles) {
+                    return; // просто ничего не делаем — диалог не открывается
+                }
                 console.log('Кнопка прикрепить нажата');
                 document.getElementById('file_input').click();
             };
@@ -208,9 +219,13 @@
             console.warn('Элемент #attach_btn не найден');
             // fallback на класс, если id потерян
             document.querySelector('.icon-btn')?.addEventListener('click', () => {
+                if (selectedFiles.length >= maxFiles) {
+                    return;
+                }
                 console.log('Fallback: .icon-btn нажата');
                 document.getElementById('file_input').click();
             });
+
         }
 
         document.getElementById('submit_btn').onclick = async () => {
