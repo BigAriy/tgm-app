@@ -155,6 +155,23 @@
             });
         };
 
+
+
+        const attachBtn = document.getElementById('attach_btn');
+        if (attachBtn) {
+            attachBtn.onclick = () => {
+                console.log('Кнопка прикрепить нажата');
+                document.getElementById('file_input').click();
+            };
+        } else {
+            console.warn('Элемент #attach_btn не найден');
+            // fallback на класс, если id потерян
+            document.querySelector('.icon-btn')?.addEventListener('click', () => {
+                console.log('Fallback: .icon-btn нажата');
+                document.getElementById('file_input').click();
+            });
+        }
+
         document.getElementById('submit_btn').onclick = async () => {
             const btn = document.getElementById('submit_btn');
             const adText = document.getElementById('ad_text').value.trim();
