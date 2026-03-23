@@ -33,7 +33,10 @@
             <div class="section"><label id="wa_label_phone">...</label><input type="text" id="contact_phone"></div>
             <div class="section"><label id="wa_label_email">...</label><input type="email" id="contact_email"></div>
         </div>
-        <button id="submit_btn">...</button>
+        <button id="submit_btn">
+            <span id="btn_text">...</span>
+            <div class="spinner-btn"></div>
+        </button>
         <div id="help-container">
             <button class="help-icon-btn" onclick="toggleHelp()"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg></button>
             <div id="help-text" class="help-content"></div>
@@ -86,7 +89,7 @@
                     'wa_label_phone': 'wa_label_phone',
                     'wa_label_email': 'wa_label_email',
                     'wa_btn_clear': 'wa_btn_clear', // Добавлено для локализации кнопки очистки
-                    'submit_btn': 'wa_btn_submit',
+                    'btn_text': 'wa_btn_submit',
                     'loader': 'wa_loading'
                 };
                 Object.keys(mapping).forEach(id => {
@@ -156,7 +159,10 @@
             if (adText.length < 20) return tg.showAlert(window.LOC.wa_error_short || "Short text");
 
             btn.disabled = true;
-            const originalText = btn.textContent;
+            btn.classList.add('is-loading');
+            const btnText = document.getElementById('btn_text');
+            const originalText = btnText.textContent;
+            btnText.textContent = window.LOC.wa_loading || "...";
             btn.textContent = "...";
 
             const formData = new FormData();
@@ -181,8 +187,18 @@
                 });
                 const result = await res.json();
                 if (res.ok) tg.close();
-                else { tg.showAlert("Err: " + result.message); btn.disabled = false; btn.textContent = originalText; }
+                else { 
+                    tg.showAlert("Err: " + result.message); 
+                    btn.disabled = false; 
+                    btn.classList.remove('is-loading');
+                    btnText.textContent = originalText; 
+                }
             } catch (e) {
+                tg.showAlert("Network Error"); 
+                btn.disabled = false; 
+                btn.classList.remove('is-loading');
+                btnText.textContent = originalText;
+            }
                 tg.showAlert("Network Error"); btn.disabled = false; btn.textContent = originalText;
             }
         };
