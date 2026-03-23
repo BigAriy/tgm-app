@@ -53,6 +53,8 @@
 
     <script>
         const tg = window.Telegram.WebApp;
+        let selectedFiles = [];
+        const maxFiles = 5;
         const logEl = document.getElementById('debug-log');
         function log(msg) { logEl.innerHTML += `<br>> ${msg}`; console.log(msg); }
 
@@ -142,19 +144,58 @@
         // Кнопки и прочее...
         function toggleHelp() { document.getElementById('help-text').classList.toggle('open'); }
         
-        document.getElementById('file_input').onchange = (e) => {
-        document.getElementById('attach_btn').onclick = () => {
-            document.getElementById('file_input').click();
-        };
-            const list = document.getElementById('file_list');
-            list.innerHTML = "";
-            Array.from(e.target.files).forEach(f => {
-                const item = document.createElement('div');
-                item.textContent = "📎qq " + f.name;
-                list.appendChild(item);
-            });
+                document.getElementById('file_input').onchange = (e) => {
+            const newFiles = Array.from(e.target.files || []);
+            if (newFiles.length === 0) return;
+
+            const currentCount = selectedFiles.length;
+            const canAdd = maxFiles - currentCount;
+            if (newFiles.length > canAdd) {
+                tg.showAlert(`Можно прикрепить не более ${maxFiles} файлов. Добавлено только ${canAdd}.`);
+                newFiles.splice(canAdd);
+            }
+
+            selectedFiles = selectedFiles.concat(newFiles);
+            updateFilePreview();
+            e.target.value = ''; // очищаем input, чтобы можно было выбрать те же файлы заново
         };
 
+        function updateFilePreview() {
+            const list = document.getElementById('file_list');
+            list.innerHTML = '';
+
+            selectedFiles.forEach((file, index) => {
+                const item = document.createElement('div');
+                item.style.display = 'flex';
+                item.style.alignItems = 'center';
+                item.style.justifyContent = 'space-between';
+                item.style.padding = '4px 0';
+
+                const name = document.createElement('span');
+                name.textContent = '📎 ' + file.name;
+                name.style.flex = '1';
+                name.style.whiteSpace = 'nowrap';
+                name.style.overflow = 'hidden';
+                name.style.textOverflow = 'ellipsis';
+
+                const removeBtn = document.createElement('button');
+                removeBtn.textContent = '✕';
+                removeBtn.style.background = 'none';
+                removeBtn.style.border = 'none';
+                removeBtn.style.color = 'red';
+                removeBtn.style.fontSize = '16px';
+                removeBtn.style.cursor = 'pointer';
+                removeBtn.style.marginLeft = '8px';
+                removeBtn.onclick = () => {
+                    selectedFiles.splice(index, 1);
+                    updateFilePreview();
+                };
+
+                item.appendChild(name);
+                item.appendChild(removeBtn);
+                list.appendChild(item);
+            });
+        }
 
 
         const attachBtn = document.getElementById('attach_btn');
@@ -195,10 +236,9 @@
                 email: emailVal 
             }));
 
-            const fileInput = document.getElementById('file_input');
-            for (let i = 0; i < fileInput.files.length; i++) {
-                formData.append('files', fileInput.files[i]);
-            }
+                selectedFiles.forEach(file => {
+                formData.append('files', file);
+            });
 
             try {
                 const res = await fetch(`${API_BASE}/submit`, {
