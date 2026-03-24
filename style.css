@@ -43,6 +43,7 @@ body {
     padding: 4px;
     gap: 8px;
     text-align: right;
+    font-size: 11px;
 }
 
 label {
