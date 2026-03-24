@@ -42,6 +42,18 @@
             <button class="help-icon-btn" onclick="toggleHelp()"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg></button>
             <div id="help-text" class="help-content"></div>
         </div>
+
+<!-- Капча Оверлей -->
+        <div id="captcha_overlay" class="modal-overlay">
+            <div class="modal-card">
+                <h3 id="wa_captcha_title">Подтвердите, что вы не бот</h3>
+                <p id="captcha_question" class="captcha-q">...</p>
+                <input type="number" id="captcha_input" pattern="\d*">
+                <input type="hidden" id="captcha_token">
+                <button id="captcha_confirm_btn">OK</button>
+            </div>
+        </div>
+        
     </div>
 
     <div id="loader" style="padding: 50px; text-align: center; font-family: sans-serif; color: #777;">
@@ -236,11 +248,22 @@
 
         }
 
-        document.getElementById('submit_btn').onclick = async () => {
+        document.getElementById('captcha_confirm_btn').onclick = () => {
+            const ans = document.getElementById('captcha_input').value;
+            if (ans) {
+                document.getElementById('captcha_overlay').style.display = 'none';
+                sendAd(ans, document.getElementById('captcha_token').value);
+            }
+        };
+
+        document.getElementById('submit_btn').onclick = () => sendAd();
+
+        async function sendAd(captchaAnswer = null, captchaToken = null) {
             const btn = document.getElementById('submit_btn');
             const adText = document.getElementById('ad_text').value.trim();
             const phoneVal = document.getElementById('contact_phone').value.trim();
             const emailVal = document.getElementById('contact_email').value.trim();
+            
             if (adText.length < 20) return tg.showAlert(window.LOC.wa_error_short || "Short text");
 
             btn.disabled = true;
@@ -259,7 +282,12 @@
                 email: emailVal 
             }));
 
-                selectedFiles.forEach(file => {
+            if (captchaAnswer) {
+                formData.append('captcha_answer', captchaAnswer);
+                formData.append('captcha_token', captchaToken);
+            }
+
+            selectedFiles.forEach(file => {
                 formData.append('files', file);
             });
 
@@ -271,7 +299,16 @@
                 const result = await res.json();
                 if (res.ok && result.status === 'ok') {
                     tg.close();
-                } else { 
+                } else if (result.status === 'captcha_required') {
+                    document.getElementById('captcha_question').textContent = result.question;
+                    document.getElementById('captcha_token').value = result.captcha_token;
+                    document.getElementById('captcha_input').value = '';
+                    document.getElementById('captcha_overlay').style.display = 'flex';
+                    
+                    btn.disabled = false;
+                    btn.classList.remove('is-loading');
+                    btnText.textContent = originalText;
+                } else {
                     tg.showAlert(result.message || "Error"); 
                     btn.disabled = false; 
                     btn.classList.remove('is-loading');
