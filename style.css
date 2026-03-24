@@ -192,3 +192,46 @@ textarea { height: 120px; resize: none; }
     opacity: 0.4;
     cursor: not-allowed;
 }
+
+/* Modal Overlay */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.modal-card {
+    background: var(--tg-bg);
+    padding: 24px;
+    border-radius: 16px;
+    width: 100%;
+    max-width: 300px;
+    text-align: center;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+}
+
+.modal-card h3 { margin-top: 0; font-size: 18px; color: var(--tg-button); }
+.captcha-q { font-size: 24px; font-weight: bold; margin: 15px 0; }
+
+#captcha_input {
+    text-align: center;
+    font-size: 20px;
+    margin-bottom: 20px;
+    border: 2px solid var(--tg-button);
+}
+
+#captcha_confirm_btn {
+    width: 100%;
+    background: var(--tg-button);
+    color: white;
+    border: none;
+    padding: 12px;
+    border-radius: 10px;
+    font-weight: bold;
+}
