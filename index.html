@@ -54,7 +54,8 @@
     <script>
         const tg = window.Telegram.WebApp;
         let selectedFiles = [];
-        const maxFiles = 5;
+        const maxFiles = 5;   // максимально количество прикрепленных файлов
+        const maxFileSize = 10 * 1024 * 1024; // 10 MB   максимальный размер каждого прикрепленного файла
         const logEl = document.getElementById('debug-log');
         function log(msg) { logEl.innerHTML += `<br>> ${msg}`; console.log(msg); }
 
@@ -155,7 +156,14 @@
                 newFiles.splice(canAdd);
             }
 
-            selectedFiles = selectedFiles.concat(newFiles);
+            const validFiles = newFiles.filter(f => {
+                if (f.size <= maxFileSize) return true;
+                tg.showAlert(`Файл ${f.name} превышает лимит 10MB.`);
+                return false;
+            });
+
+            selectedFiles = selectedFiles.concat(validFiles);
+
             updateFilePreview();
             e.target.value = ''; // очищаем input, чтобы можно было выбрать те же файлы заново
         };
