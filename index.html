@@ -95,6 +95,8 @@
             function getUrl(path, params = {}) {
                 const url = new URL(`${API_BASE}${path}`);
                 Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
+                // Передаем initData для валидации в каждом GET запросе
+                url.searchParams.append('init_data', tg.initData);
                 url.searchParams.append('v', Date.now());
                 return url.toString();
             }
@@ -284,8 +286,10 @@
             btnText.textContent = window.LOC.wa_loading || "...";
 
             const formData = new FormData();
-            formData.append('user_id', tg.initDataUnsafe?.user?.id || 12345);
+            // Передаем сырую строку инициализации для проверки подписи на сервере
+            formData.append('init_data', tg.initData);
             formData.append('channel_id', document.getElementById('channel_select').value);
+
             formData.append('text', adText);
             formData.append('contact_info', JSON.stringify({ 
                 name: document.getElementById('contact_name').value, 
